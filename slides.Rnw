@@ -1,0 +1,668 @@
+\documentclass{beamer}
+\usetheme[secheader]{Northampton}
+
+\usepackage{multimedia}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{xspace}
+
+\newcommand{\R}{\textsf{R}\xspace}
+
+%\graphicspath{{../gfx/}} % e.g. where you have your logos
+
+\title[Baseball Data]{Fun with Publicly Available Baseball Data in R}
+\subtitle[Baseball]{Statistics can be fun!}
+
+\author[Matthews]{Gregory J. Matthews\inst{1} }
+    
+\institute[LUC]{  
+%  \begin{tabular}[h]{cc}
+%      Foo University &  Bar Institute \\
+%      Foo, MA, 02134 &  Bar, CA, 90210
+%  \end{tabular}   
+	\inst{1}{
+%  Department of Mathematics \& Statistics\\
+	Loyola Univeristy Chicago
+%  \texttt{bbaumer@smith.edu}
+	}
+}
+
+%% Fix content
+\titlegraphic{ \includegraphics[width=2in]{LoyolaLogoLong} }
+\logo{ \includegraphics[width=0.05\textwidth]{LoyolaLogoSmall} }
+
+\date[OCC]{Oakton Community College\\March 2, 2020}
+
+
+\begin{document}
+%\SweaveOpts{concordance=TRUE}
+%\SweaveOpts{concordance=TRUE}
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \tableofcontents
+\end{frame}
+
+
+\section{Introduction}
+%https://sabr.org/sabermetrics/data
+\subsection{A brief history of baseball data}
+\begin{frame}
+\begin{itemize}
+\item Line score
+\item Box scores (1859, Henry Chadwick) %https://www.npr.org/templates/story/story.php?storyId=106891539#:~:text=The%20Man%20Who%20Made%20Baseball's%20Box%20Score%20A%20Hit%20Henry,and%20trying%20to%20dissect%20them.)
+\item Baseball Abstracts (1970s, Bill James)
+\item Retrosheet (1989, Dr. David Smith) (Play by play of every game)
+\item Lahman Database (1995, Sean Lahman) %https://en.wikipedia.org/wiki/Sean_Lahman)
+\item Baseball Reference (2000, Sean Forman)
+\item Pitch FX (2006) %https://library.fangraphs.com/misc/pitch-fx/#:~:text=PITCHf%2Fx%20is%20a%20pitch,MLB%20stadium%20since%20around%202006.)
+\item Statcast (2015) %https://en.wikipedia.org/wiki/Statcast#:~:text=Statcast%20is%20a%20high%2Dspeed,thirty%20MLB%20stadiums%20in%202015.)
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+\item Line score
+\item Box scores (1859, Henry Chadwick %https://www.npr.org/templates/story/story.php?storyId=106891539#:~:text=The%20Man%20Who%20Made%20Baseball's%20Box%20Score%20A%20Hit%20Henry,and%20trying%20to%20dissect%20them.)
+\item Baseball Abstracts (1970s, Bill James)
+\item Retrosheet (1989, Dr. David Smith) (Play by play of every game)
+\item {\bf Lahman Database} (1995, Sean Lahman %https://en.wikipedia.org/wiki/Sean_Lahman)
+\item Baseball Reference (2000, Sean Forman)
+\item Pitch FX (2006) %https://library.fangraphs.com/misc/pitch-fx/#:~:text=PITCHf%2Fx%20is%20a%20pitch,MLB%20stadium%20since%20around%202006.)
+\item {\bf Statcast} (2015) %https://en.wikipedia.org/wiki/Statcast#:~:text=Statcast%20is%20a%20high%2Dspeed,thirty%20MLB%20stadiums%20in%202015.)
+\end{itemize}
+\end{frame}
+
+
+
+\section{The data!}
+\subsection{Lahman Database}
+\begin{frame}{Lahman Database}
+\begin{itemize}
+\item The updated version of the database contains complete batting and pitching statistics from 1871 to 2020, plus fielding statistics, standings, team stats, managerial records, post-season data, and more.
+\item http://www.seanlahman.com/baseball-archive/statistics/
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+<<message = FALSE, warning=FALSE, eval = FALSE>>=
+library(tidyverse)
+library(Lahman)
+Batting %>% 
+  subset(yearID <= 2019 & yearID >= 2000) %>%
+  arrange(-HR) %>% 
+  left_join(People) %>%
+  select(nameFirst,nameLast,yearID,HR) %>%
+  head(10)
+@
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+<<message = FALSE, warning=FALSE, echo = FALSE>>=
+library(tidyverse)
+library(Lahman)
+Batting %>% 
+  subset(yearID <= 2019 & yearID >= 2000) %>%
+  arrange(-HR) %>% 
+  left_join(People) %>%
+  select(nameFirst,nameLast,yearID,HR) %>%
+  head(10)
+@
+\end{frame}
+
+
+\begin{frame}[fragile]
+<<message = FALSE, warning=FALSE, eval = FALSE>>=
+library(dplyr)
+library(Lahman)
+#Take data from 2015 - 2019
+#dat <- subset(Batting, yearID <= 2019 & yearID >= 2015)
+#RBI from 2015 to 2019
+Batting %>% 
+  subset(yearID <= 2019 & yearID >= 2015) %>%
+  group_by(playerID) %>% 
+  summarise(HR = sum(HR), Hits = sum(H), RBI = sum(RBI)) %>%
+  arrange(-RBI) %>% 
+  left_join(People) %>%
+  select(nameFirst,nameLast,HR,Hits,RBI)
+@
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+<<message = FALSE, warning=FALSE, echo = FALSE>>=
+library(dplyr)
+library(Lahman)
+#Take data from 2015 - 2019
+#dat <- subset(Batting, yearID <= 2019 & yearID >= 2015)
+#RBI from 2015 to 2019
+Batting %>% 
+  subset(yearID <= 2019 & yearID >= 2015) %>%
+  group_by(playerID) %>% 
+  summarise(HR = sum(HR), Hits = sum(H), RBI = sum(RBI)) %>%
+  arrange(-RBI) %>% 
+  left_join(People) %>%
+  select(nameFirst,nameLast,HR,Hits,RBI)
+@
+\end{frame}
+
+
+
+
+\subsection{Statcast}
+\begin{frame}{Statcast}
+\begin{itemize}
+\item From wikipedia: "Statcast is a high-speed, high-accuracy, automated tool developed to analyze player movements and athletic abilities in Major League Baseball (MLB). Statcast was introduced to all thirty MLB stadiums in 2015."
+\item Based on Doppler radar and high defintion video. 
+\item https://baseballsavant.mlb.com/statcast\_search
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Getting Statcast Data}[fragile]
+<<echo = FALSE, warning = FALSE, message = FALSE>>=
+#Shout out to Bill Petti!
+scrape_statcast_savant_pitcher_date <- function(start_date, end_date) {
+  
+  # extract year
+  year <- substr(start_date, 1,4)
+  
+  # Base URL.
+  url <- paste0("https://baseballsavant.mlb.com/statcast_search/csv?all=true&hfPT=&hfAB=&hfBBT=&hfPR=&hfZ=&stadium=&hfBBL=&hfNewZones=&hfGT=R%7C&hfC=&hfSea=",year,"%7C&hfSit=&player_type=pitcher&hfOuts=&opponent=&pitcher_throws=&batter_stands=&hfSA=&game_date_gt=",start_date,"&game_date_lt=",end_date,"&team=&position=&hfRO=&home_road=&hfFlag=&metric_1=&hfInn=&min_pitches=0&min_results=0&group_by=name&sort_col=pitches&player_event_sort=h_launch_speed&sort_order=desc&min_abs=0&type=details&")
+  
+  payload <- utils::read.csv(url)
+  
+  if (length(payload$pitch_type) > 0) {
+  
+  # Clean up formatting.
+  payload$game_date <- as.Date(payload$game_date, "%Y-%m-%d")
+  payload$des <- as.character(payload$des)
+  payload$game_pk <- as.character(payload$game_pk) %>% as.numeric()
+  payload$on_1b <- as.character(payload$on_1b) %>% as.numeric()
+  payload$on_2b <- as.character(payload$on_2b) %>% as.numeric()
+  payload$on_3b <- as.character(payload$on_3b) %>% as.numeric()
+  payload$release_pos_x <- as.character(payload$release_pos_x) %>% as.numeric()
+  payload$release_pos_z <- as.character(payload$release_pos_z) %>% as.numeric()
+  payload$release_pos_y <- as.character(payload$release_pos_y) %>% as.numeric()
+  payload$pfx_x <- as.character(payload$pfx_x) %>% as.numeric()
+  payload$pfx_z <- as.character(payload$pfx_z) %>% as.numeric()
+  payload$hc_x <- as.character(payload$hc_x) %>% as.numeric()
+  payload$hc_y <- as.character(payload$hc_y) %>% as.numeric()
+  payload$woba_denom <- as.character(payload$woba_denom) %>% as.numeric()
+  payload$woba_value <- as.character(payload$woba_value) %>% as.numeric()
+  payload$babip_value <- as.character(payload$babip_value) %>% as.numeric()
+  payload$iso_value <- as.character(payload$iso_value) %>% as.numeric()
+  payload$plate_z <- as.character(payload$plate_z) %>% as.numeric()
+  payload$plate_x <- as.character(payload$plate_x) %>% as.numeric()
+  payload$vx0 <- as.character(payload$vx0) %>% as.numeric()
+  payload$vy0 <- as.character(payload$vy0) %>% as.numeric()
+  payload$vz0 <- as.character(payload$vz0) %>% as.numeric()
+  payload$ax <- as.character(payload$ax) %>% as.numeric()
+  payload$ay <- as.character(payload$ay) %>% as.numeric()
+  payload$az <- as.character(payload$az) %>% as.numeric()
+  payload$sz_top <- as.character(payload$sz_top) %>% as.numeric()
+  payload$sz_bot <- as.character(payload$sz_bot) %>% as.numeric()
+  payload$hit_distance_sc <- as.character(payload$hit_distance_sc) %>% as.numeric()
+  payload$launch_speed <- as.character(payload$launch_speed) %>% as.numeric()
+  payload$launch_speed_angle <- as.character(payload$launch_speed_angle) %>% as.numeric()
+  payload$launch_angle <- as.character(payload$launch_angle) %>% as.numeric()
+  payload$estimated_ba_using_speedangle <- as.character(payload$estimated_ba_using_speedangle) %>% as.numeric()
+  payload$estimated_woba_using_speedangle <- as.character(payload$estimated_woba_using_speedangle) %>% as.numeric()
+  payload$effective_speed <- as.character(payload$effective_speed) %>% as.numeric()
+  payload$release_speed <- as.character(payload$release_speed) %>% as.numeric()
+  payload$zone <- as.character(payload$zone) %>% as.numeric()
+  payload$release_spin_rate <- as.character(payload$release_spin_rate) %>% as.numeric()
+  payload$release_extension <- as.character(payload$release_extension) %>% as.numeric()
+  payload$barrel <- with(payload, ifelse(launch_angle <= 50 & launch_speed >= 98 & launch_speed * 1.5 - launch_angle >= 117 & launch_speed + launch_angle >= 124, 1, 0))
+  payload$home_team <- as.character(payload$home_team)
+  payload$away_team <- as.character(payload$away_team)
+  
+  return(payload)
+  }
+  
+  else {
+    vars <- names(payload)
+    df <- lapply(vars, function(x) x <- NA)
+    names(df) <- names(payload)
+    payload_na <- bind_rows(df)
+  
+    return(payload_na)
+    
+    Sys.sleep(sample(x = runif(20, min = .01, max = 1), size = 1))
+  }
+}
+@
+
+<<message = FALSE, warning=FALSE, echo = TRUE, size = "tiny">>=
+#Shout out to Bill Petti (@billpetti).  
+#https://billpetti.github.io/2018-02-19-build-statcast-database-rstats/
+library(dplyr)
+library(tidyverse)
+library(baseballr)
+#mlb2020 <- scrape_statcast_savant_pitcher_date("2020-07-23","2020-07-25")
+#save(mlb2020, file = "/Users/gregorymatthews/Dropbox/Talks/openWARLoyolaHighSchool/mlb2020.RData")
+load("/Users/gregorymatthews/Dropbox/Talks/openWARLoyolaHighSchool/mlb2020.RData")
+@
+\end{frame}
+
+% \begin{frame}[fragile]
+% <<eval = FALSE, size= "small">>=
+% library(ggplot2)
+% ggplot(aes(x = release_speed, fill = pitch_name), data = mlb2020) +
+%   geom_histogram() 
+% @
+% \end{frame}
+
+% \begin{frame}[fragile]
+% <<echo = FALSE, message = FALSE, warning = FALSE, fig.height=5>>=
+% library(ggplot2)
+% ggplot(aes(x = release_speed, fill = pitch_name), data = mlb2020) + geom_histogram() 
+% @
+% \end{frame}
+
+\begin{frame}[fragile]
+<<eval = FALSE, size = "small">>=
+library(ggplot2)
+ggplot(aes(x = release_speed, fill = pitch_name), data = mlb2020) +
+  geom_boxplot() 
+@
+\end{frame}
+
+\begin{frame}[fragile]
+<<echo = FALSE, message = FALSE, warning = FALSE, fig.height = 5>>=
+library(ggplot2)
+ggplot(aes(x = release_speed, fill = pitch_name), data = mlb2020) + geom_boxplot() 
+@
+\end{frame}
+
+\begin{frame}[fragile]
+<<eval = FALSE, size= "small">>=
+library(ggplot2)
+pitches <- c("Curveball","4-Seam Fastball","Slider","Sinker")
+mlb2020 %>% 
+  subset(pitch_name %in% pitches) %>% 
+  ggplot(aes(x = release_speed))  + 
+  geom_density(aes(x = release_speed, after_stat(count)), alpha = 0.5) + 
+  facet_wrap(~pitch_name) + theme_bw()
+#Claps for Quang Nguyen for suggesting theme_bw()
+@
+\end{frame}
+
+\begin{frame}[fragile]
+<<echo = FALSE, size= "small",fig.height=5>>=
+library(ggplot2)
+mlb2020 %>% subset(pitch_name %in% c("Curveball", "4-Seam Fastball","Slider","Sinker")) %>% ggplot(aes(x = release_speed))  + geom_density(aes(x = release_speed, after_stat(count)), alpha = 0.5) + facet_wrap(~pitch_name)
+@
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+<<eval = FALSE, message = FALSE, warning = FALSE, size = "small">>=
+library(ggplot2)
+mlb2020 %>%
+  subset(events %in% c("single","double","triple","home_run")) %>%
+  ggplot(aes(y = -hc_y, x = hc_x, color = events)) +
+  geom_point() + 
+  ggtitle("hits")
+@
+\end{frame}
+
+\begin{frame}[fragile]
+<<echo = FALSE, fig.height = 5, warning = FALSE, size = "small">>=
+library(ggplot2)
+mlb2020 %>% 
+  subset(events %in% c("single","double","triple","home_run")) %>%
+ggplot(aes(y = -hc_y, x = hc_x, color = events)) + 
+  geom_point() + 
+  ggtitle("hits")
+@
+\end{frame}
+
+% \begin{frame}[fragile]
+% <<eval = FALSE >>=
+% library(ggplot2)
+% mlb2020 %>% 
+%   subset(events %in% c("field_out")) %>% 
+% ggplot(aes(y = -hc_y, x = hc_x)) + 
+%   stat_density_2d(aes(fill = ..level..), geom = "polygon") + 
+%   ggtitle("outs")
+% @
+% \end{frame}
+% 
+% \begin{frame}[fragile]
+% <<echo = FALSE, fig.height = 5, warning = FALSE, size = "small">>=
+% library(ggplot2)
+% mlb2020 %>% subset(events %in% c("field_out")) %>% 
+% ggplot(aes(y = -hc_y, x = hc_x)) + stat_density_2d(aes(fill = ..level..), geom = "polygon") + ggtitle("outs")
+% @
+% \end{frame}
+
+\begin{frame}[fragile]
+<<eval = FALSE>>=
+library(ggplot2)
+mlb2020 %>% 
+  subset(description %in% c("ball","called_strike")) %>% 
+ggplot(aes(x = plate_x, y = plate_z, color = description)) +
+  geom_point() + xlim(-4,4) + ylim(-2,8)
+@
+\end{frame}
+
+\begin{frame}[fragile]
+<<echo = FALSE, fig.height = 5, warning = FALSE, size = "small">>=
+library(ggplot2)
+mlb2020 %>% 
+  subset(description %in% c("ball","called_strike")) %>% 
+ggplot(aes(x = plate_x, y = plate_z, color = description)) +
+  geom_point() + xlim(-4,4) + ylim(-2,8)
+@
+\end{frame}
+
+
+\section{Some of my projects}
+\subsection{openWAR}
+
+
+
+
+\begin{frame}
+  \frametitle{WAR - What is it good for?}
+  \begin{itemize}
+    \item Wins above replacement 
+    \item Question: How large is the contribution that each player makes towards winning?
+    \item Four Components:
+    \begin{enumerate}
+      \item Batting
+      \item Baserunning
+      \item Fielding
+      \item Pitching
+    \end{enumerate}
+%    \item The basic idea is to calculate a baseball player's contribution in terms of the extra wins they created for their team over a replacement player.
+    \item Replacement Player: Hypothetical 4A journeyman 
+    \begin{itemize}
+      \item Much worse than an average player
+    \end{itemize}
+%    \item Mike Trouts WAR, conceptually, is the difference between the amount of wins his team achieves with him in the lineup versus the amount of wins acheived with him replaced in the lineup by a {\it replacement player} and all other players held constant.  
+%    \item Concept same, but many different ways to calculate WAR
+  \end{itemize}
+  \end{frame}
+  
+  \begin{frame}
+  \frametitle{Units and Scaling}
+  \begin{itemize}
+    \item In terms of \alert{absolute runs}:
+    \begin{center}
+      \begin{tikzpicture}[xscale=0.07, yscale=0.75,
+  			sensor/.style={circle,draw=black,fill=red!50,thick,opacity=0.75,inner sep=0pt,minimum size=2mm}]
+				\draw[->] (0,0) -- (160,0) coordinate (x axis);
+				\foreach \x/\xtext in {10, 40, 90, 140}
+					\draw (\x,1pt) -- (\x,-1pt) node[anchor=north] {$\xtext$};
+				\coordinate [label=above:Miguel Cabrera] (mc) at (132, 0);
+				\coordinate [label=above:Average] (avg) at (75, 0);
+				\coordinate [label=above:Replacement] (r) at (40, 0);
+				\coordinate [label=above:Me] (me) at (1, 0);
+  			\node [sensor] at (mc) [] {};
+				\node [sensor] at (avg) [] {};
+				\node [sensor] at (r) [] {};
+				\node [sensor] at (me) [] {};
+			\end{tikzpicture}
+    \end{center}    
+    \item In terms of \alert{Runs Above Replacement} ($RAR$):
+    \begin{center}
+      \begin{tikzpicture}[xscale=0.07, yscale=0.75,
+  			sensor/.style={circle,draw=black,fill=red!50,thick,opacity=0.75,inner sep=0pt,minimum size=2mm}]
+				\draw[->] (-40,0) -- (120,0) coordinate (x axis);
+				\foreach \x/\xtext in {-30, 0, 50, 100}
+					\draw (\x,1pt) -- (\x,-1pt) node[anchor=north] {$\xtext$};
+				\coordinate [label=above:Miguel Cabrera] (mc) at (92, 0);
+				\coordinate [label=above:Average] (avg) at (35, 0);
+				\coordinate [label=above:Replacement] (r) at (0, 0);
+				\coordinate [label=above:Me] (me) at (-39, 0);
+  			\node [sensor] at (mc) [] {};
+				\node [sensor] at (avg) [] {};
+				\node [sensor] at (r) [] {};
+				\node [sensor] at (me) [] {};
+			\end{tikzpicture}
+    \end{center}
+    \item In terms of \alert{Wins Above Replacement} ($WAR$):
+    \begin{center}
+      \begin{tikzpicture}[xscale=0.7, yscale=0.75,
+  			sensor/.style={circle,draw=black,fill=red!50,thick,opacity=0.75,inner sep=0pt,minimum size=2mm}]
+				\draw[->] (-4,0) -- (12,0) coordinate (x axis);
+				\foreach \x/\xtext in {-3, 0, 5, 10}
+					\draw (\x,1pt) -- (\x,-1pt) node[anchor=north] {$\xtext$};
+				\coordinate [label=above:Miguel Cabrera] (mc) at (9.2, 0);
+				\coordinate [label=above:Average] (avg) at (3.5, 0);
+				\coordinate [label=above:Replacement] (r) at (0, 0);
+				\coordinate [label=above:Me] (me) at (-3.9, 0);
+  			\node [sensor] at (mc) [] {};
+				\node [sensor] at (avg) [] {};
+				\node [sensor] at (r) [] {};
+				\node [sensor] at (me) [] {};
+			\end{tikzpicture}
+    \end{center}
+  \end{itemize}
+\end{frame}
+  
+  \begin{frame}
+\frametitle{What's Wrong with WAR?}
+  \begin{itemize}
+    \item Not Reproducible
+    \begin{itemize}
+      \item WAR is an unknown hypothetical quantity -- not a \alert{statistic}
+      \item No reference implementation of WAR
+      \item No open data set
+      \item No open source code
+    \end{itemize}
+    \item No unified methodology
+    \begin{itemize}
+      \item Each component of WAR is viewed as a separate problem -- not a piece of the same problem
+      \item Ad hoc definitions: what is replacement level?
+    \end{itemize}
+    \item No error estimates
+    \begin{itemize}
+      \item Only reported as \alert{point estimates}
+      \item Only hand-wavy estimates of variability or margin or error
+    \end{itemize}
+    \item Bug or Feature?: Competing black-box implementations
+  \end{itemize}
+\end{frame}
+
+\subsection{Our Contribution}
+
+\begin{frame}
+  \frametitle{Our Contribution: $openWAR$}
+  \begin{itemize}
+    \item $openWAR$: a reproducible reference implementation of WAR
+    \begin{itemize}
+      \item Principled \alert{estimate} of WAR
+      \item Fully open-source \R package (free as in freedom)
+      \item Partially open data (free as in beer)
+    \end{itemize}
+    \item Unified Methodology:
+    \begin{itemize}
+      \item Conservation of Runs
+      \item Each component is estimated as a piece of the larger problem
+    \end{itemize}
+%    \item Rather than view each component of WAR as a separate piece, we compute all parts in the same manner and combine. 
+    \item Error estimates:
+    \begin{itemize}
+      \item Use resampling methods to report WAR \alert{interval} estimates
+    \end{itemize}
+%    \item We use data at the level of the individual plate appearance.  
+    \item Version 0.1: Emphasis at this stage on \alert{reproducibility}
+  \end{itemize}
+\end{frame}
+
+
+% \begin{frame}[fragile]
+%   \frametitle{Installing the Package}
+% <<eval=FALSE, message=FALSE, size='footnotesize'>>=
+% install.packages("xslt")
+% devtools::install_github("beanumber/openWAR")
+% #devtools::install_github("znmeb/openWAR")
+% devtools::install_github("beanumber/openWARData")
+% @
+% \end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Getting Data}
+<<eval=FALSE, message=FALSE, warning=FALSE, size="scriptsize">>=
+#Paper link: https://arxiv.org/abs/1312.7158
+install.packages("xslt")
+#Package with functions
+devtools::install_github("beanumber/openWAR")
+#Package containing the data
+devtools::install_github("beanumber/openWARData")
+library(openWAR)
+ds = getData(start = "2013-06-24")
+dim(ds)
+head(ds$description)
+@
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Getting Data}
+  <<echo=FALSE>>=
+library(openWAR)
+@
+<<message=FALSE, warning=FALSE, size="scriptsize">>=
+library(openWARData)
+dim(MLBAM2017)
+head(MLBAM2017$description)
+@
+\end{frame}
+
+% \begin{frame}
+% \frametitle{Data Contents}
+%   \begin{itemize}
+%     \item Each row represents a plate appearance
+%     \item Complete description of the game state (i.e. balls, strikes, ballpark, outs, etc.)
+%     \item Baserunner movement (before and during) is captured
+%     \item Hit location given as $(x,y)$-coordinate
+%     \item Fielder and baserunner identities   
+% %    \item getData transforms ball in play locations from MLBAM coordinates
+% %    \item getData also returns where each base runner was at the start of a plate appearance and who was playing defense
+%     \item PITCHf/x not currently captured, but could be added in a future release
+%   \end{itemize}
+% \end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Visualizing the Data}
+<<eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize', fig.height=4.5,fig.width=8>>=
+library(openWARData)
+data(MLBAM2013)
+plot(subset(MLBAM2013, event %in% c("Single","Double")))
+@
+\end{frame}
+
+% \begin{frame}[fragile]
+% \frametitle{Visualizing the Data}
+% <<eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize', fig.height=4.5,fig.width=8>>=
+% data(MLBAM2013)
+% plot(subset(MLBAM2013, event=="Triple" & stand=="R"))
+% @
+% \end{frame}
+% 
+\begin{frame}[fragile]
+\frametitle{Which Ballpark is this?}
+<<eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize', fig.height=4.5,fig.width=8,echo=FALSE>>=
+data(MLBAM2013)
+plot(subset(MLBAM2013, stadium%in%c("Fenway Park")))
+@
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Which Ballpark is this?}
+<<eval=TRUE, message=FALSE, warning=FALSE, size='scriptsize', fig.height=4.5,fig.width=8,echo=FALSE>>=
+data(MLBAM2013)
+plot(subset(MLBAM2013, stadium%in%c("Wrigley Field")))
+@
+\end{frame}
+
+\subsection{Astros Banging Scandal}
+\begin{frame}{Main findings}
+\begin{itemize}
+\item Less Swinging
+\begin{itemize}
+\item Odds of a swing are about 28\% lower (OR 95\% CI: 0.618, 0.850)
+\end{itemize}
+\item More contact on swings (on off-speed pitches)
+\begin{itemize}
+\item Given a swing and an offspeed pitch, odds of contact are about 80\% higher (OR 95\% CI: 1.342, 2.675)
+\end{itemize}
+\item Increased Exit Velocity
+\begin{itemize}
+\item Given a contact, 2.386 mile per hours average increase in exit velocity (95\% CI: 0.334, 4.451)
+\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+<<size='scriptsize', message=FALSE, warning=FALSE>>=
+#Github repo: https://github.com/gjm112/Astros_sign_stealing
+#Paper: http://bit.ly/Astros_Cheat
+library(RCurl)
+#Bangs file 
+bangs <- read.csv("https://raw.githubusercontent.com/gjm112/Astros_sign_stealing/master/data/astros_bangs_20200127.csv")
+
+#Bangs file combined with pitchinfo.com data.  
+githubURL <- ("https://github.com/gjm112/Astros_sign_stealing/blob/master/data/bangs-merged-final.rds?raw=true")
+download.file(githubURL,"/Users/gregorymatthews/bangs-merged-final.rds", mode = "wb")
+bangs_merged_final <- readRDS(file = "/Users/gregorymatthews/bangs-merged-final.rds")
+@
+\end{frame}
+
+\begin{frame}[fragile]
+<<echo = FALSE, fig.height = 5>>=
+df <- bangs_merged_final
+players <- df %>%
+  group_by(batter) %>%
+  summarize(n = n()) %>%
+  arrange(desc(n)) %>%
+  top_n(9) %>%
+  pull(batter) %>%
+  as.character()
+
+p <- df %>%
+  filter(batter %in% players) %>%
+  group_by(batter, has_bangs) %>%
+  summarize(n = n()) %>%
+  ggplot(., aes(x = reorder(batter, n), y = n, fill = has_bangs)) 
+
+p + geom_bar(stat = "identity") +
+  scale_fill_manual("bangs", values = c("#002D62", "#EB6E1F"),
+                    labels = c("no", "yes")) +
+  labs(y = "number of pitches",
+       x = "") +
+  theme_bw() +
+  coord_flip()
+@
+\end{frame}
+
+\begin{frame}{Final Thoughts}
+\begin{itemize}
+\item Sources of raw data: https://sabr.org/sabermetrics/data
+\item Github for this talk: 
+https://github.com/gjm112/Oakton_STEM_Series_baseball
+\item Me on Twitter: @statsinthewild
+\item My email address: gmatthews1@luc.edu
+\item Hey, Greg?  Where can I get a job in the sports industry?  
+\item teamworkonline.com
+\end{itemize}
+\end{frame}
+  
+\begin{frame}
+Cheers!
+\end{frame}
+  
+  
+\end{document}
+
+
