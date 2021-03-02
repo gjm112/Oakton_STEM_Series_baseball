@@ -213,7 +213,9 @@ plot(subset(MLBAM2013, stadium%in%c("Wrigley Field")))
   #Paper: http://bit.ly/Astros_Cheat
   library(RCurl)
 #Bangs file 
-bangs <- read.csv("https://raw.githubusercontent.com/gjm11/Astros_sign_stealing/master/data/astros_bangs_20200127.csv")
+url <- "https://raw.githubusercontent.com/gjm112/Astros_sign_stealing/master/data/astros_bangs_20200127.csv"
+x <- getURL(url)
+bangs <- read.csv(text = x)
 
 #Bangs file combined with pitchinfo.com data.  
 githubURL <- ("https://github.com/gjm112/Astros_sign_stealing/blob/master/data/bangs-merged-final.rds?raw=true")
